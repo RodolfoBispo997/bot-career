@@ -38,6 +38,8 @@ O health check fica disponível em `GET http://localhost:3000/health`.
 O perfil de busca atual pode ser consultado em `GET http://localhost:3000/search-profile`.
 Ele é mantido como configuração TypeScript tipada, sem persistência no PostgreSQL neste ciclo.
 
+O classificador determinístico pode ser usado em `POST http://localhost:3000/job-classifier/classify` com um corpo contendo `title`, `description`, `employmentType`, `workMode` e `location`.
+
 ## Testes
 
 ```bash
