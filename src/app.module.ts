@@ -4,6 +4,7 @@ import { HealthModule } from './health/health.module';
 import { JobClassifierModule } from './job-classifier/job-classifier.module';
 import { JobDecisionModule } from './job-decision/job-decision.module';
 import { JobScoreModule } from './job-score/job-score.module';
+import { JobSearchModule } from './job-search/job-search.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SearchProfileModule } from './search-profile/search-profile.module';
@@ -17,6 +18,7 @@ import { SearchProfileModule } from './search-profile/search-profile.module';
     JobClassifierModule,
     JobDecisionModule,
     JobScoreModule,
+    JobSearchModule,
     SearchProfileModule,
   ],
 })

@@ -44,6 +44,8 @@ A decisão inicial pode ser avaliada em `POST http://localhost:3000/job-decision
 
 O score determinístico pode ser avaliado em `POST http://localhost:3000/job-score/evaluate`. O fluxo chama classificação, decisão e score, retornando os três resultados sem persistência.
 
+A busca real usa a API pública do Remotive em `GET http://localhost:3000/job-search?limit=20`. Ela coleta, normaliza, classifica, decide, pontua e ordena vagas sem persistência.
+
 ## Testes
 
 ```bash
