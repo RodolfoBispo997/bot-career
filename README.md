@@ -25,6 +25,8 @@ npm run prisma:generate
 npm run prisma:migrate -- --name init
 ```
 
+Como o banco pode ainda não estar disponível localmente, a migration deve ser executada posteriormente, com o PostgreSQL ativo e o `DATABASE_URL` configurado.
+
 ## Executar
 
 ```bash
@@ -32,6 +34,9 @@ npm run start:dev
 ```
 
 O health check fica disponível em `GET http://localhost:3000/health`.
+
+O perfil de busca atual pode ser consultado em `GET http://localhost:3000/search-profile`.
+Ele é mantido como configuração TypeScript tipada, sem persistência no PostgreSQL neste ciclo.
 
 ## Testes
 

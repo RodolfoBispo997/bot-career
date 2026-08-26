@@ -6,3 +6,56 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+  UNKNOWN
+}
+
+enum EmploymentType {
+  CLT
+  PJ
+  INTERNSHIP
+  TRAINEE
+  COOPERATIVE
+  TEMPORARY
+  OTHER
+  UNKNOWN
+}
+
+enum JobSource {
+  GUPY
+  SOLIDES
+  VAGAS
+  CATHO
+  GREENHOUSE
+  LEVER
+  WORKDAY
+  CAREER_SITE
+  OTHER
+}
+
+model Job {
+  id             String         @id @default(uuid()) @db.Uuid
+  externalId     String?
+  title          String
+  company        String?
+  description    String
+  location       String?
+  workMode       WorkMode       @default(UNKNOWN)
+  employmentType EmploymentType @default(UNKNOWN)
+  source         JobSource
+  sourceUrl      String
+  publishedAt    DateTime?
+  discoveredAt   DateTime       @default(now())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([source, externalId])
+  @@index([source])
+  @@index([externalId])
+  @@index([discoveredAt])
+  @@index([publishedAt])
+}
