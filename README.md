@@ -40,6 +40,8 @@ Ele é mantido como configuração TypeScript tipada, sem persistência no Postg
 
 O classificador determinístico pode ser usado em `POST http://localhost:3000/job-classifier/classify` com um corpo contendo `title`, `description`, `employmentType`, `workMode` e `location`.
 
+A decisão inicial pode ser avaliada em `POST http://localhost:3000/job-decision/evaluate`. O endpoint classifica a vaga e retorna a decisão, motivos, warnings e regras aplicadas sem persistir dados.
+
 ## Testes
 
 ```bash
