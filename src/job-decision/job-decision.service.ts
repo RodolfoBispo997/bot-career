@@ -12,7 +12,11 @@ import { JobDecisionInput, JobDecisionResult } from './types';
 
 @Injectable()
 export class JobDecisionService {
-  evaluate({ job, classification, profile }: JobDecisionInput): JobDecisionResult {
+  evaluate({
+    job,
+    classification,
+    profile,
+  }: JobDecisionInput): JobDecisionResult {
     const reasons: string[] = [];
     const warnings: string[] = [...classification.warnings];
     const matchedRules: string[] = [];
@@ -30,7 +34,9 @@ export class JobDecisionService {
     }
 
     if (isLocationReviewRequired(job)) {
-      reasons.push('Vaga híbrida ou presencial exige revisão manual da localização');
+      reasons.push(
+        'Vaga híbrida ou presencial exige revisão manual da localização',
+      );
       warnings.push('Localização precisa de revisão manual');
       matchedRules.push('WORK_MODE_LOCATION_REVIEW');
       return { decision: 'REVIEW_LOCATION', reasons, warnings, matchedRules };
@@ -48,10 +54,19 @@ export class JobDecisionService {
       return { decision: 'REVIEW', reasons, warnings, matchedRules };
     }
 
-    if (this.requiresSeniorityReview(classification.track, classification.seniority)) {
-      reasons.push(`Senioridade ${classification.seniority} exige revisão para esta trilha`);
+    if (
+      this.requiresSeniorityReview(
+        classification.track,
+        classification.seniority,
+      )
+    ) {
+      reasons.push(
+        `Senioridade ${classification.seniority} exige revisão para esta trilha`,
+      );
       matchedRules.push(
-        classification.track === JobTrack.NODE ? 'NODE_MID_REVIEW' : 'PHP_TRAINEE_REVIEW',
+        classification.track === JobTrack.NODE
+          ? 'NODE_MID_REVIEW'
+          : 'PHP_TRAINEE_REVIEW',
       );
       return { decision: 'REVIEW', reasons, warnings, matchedRules };
     }
@@ -107,16 +122,22 @@ export class JobDecisionService {
         (allowedTrack) => allowedTrack === classification.track,
       )
     ) {
-      reasons.push(`Fullstack com backend principal ${classification.primaryStack} está fora do perfil`);
+      reasons.push(
+        `Fullstack com backend principal ${classification.primaryStack} está fora do perfil`,
+      );
       matchedRules.push('FULLSTACK_UNSUPPORTED_BACKEND_REJECT');
       return true;
     }
 
     if (
       classification.track === JobTrack.OTHER &&
-      ALTERNATIVE_STACKS.includes(classification.primaryStack as (typeof ALTERNATIVE_STACKS)[number])
+      ALTERNATIVE_STACKS.includes(
+        classification.primaryStack as (typeof ALTERNATIVE_STACKS)[number],
+      )
     ) {
-      reasons.push(`Stack principal ${classification.primaryStack} está fora do objetivo do perfil`);
+      reasons.push(
+        `Stack principal ${classification.primaryStack} está fora do objetivo do perfil`,
+      );
       matchedRules.push('ALTERNATIVE_PRIMARY_STACK_REJECT');
       return true;
     }
@@ -129,18 +150,26 @@ export class JobDecisionService {
 
     if (
       classification.track === JobTrack.NODE &&
-      NODE_REJECTED_SENIORITIES.includes(classification.seniority as (typeof NODE_REJECTED_SENIORITIES)[number])
+      NODE_REJECTED_SENIORITIES.includes(
+        classification.seniority as (typeof NODE_REJECTED_SENIORITIES)[number],
+      )
     ) {
-      reasons.push(`Senioridade ${classification.seniority} está fora do objetivo para Node.js`);
+      reasons.push(
+        `Senioridade ${classification.seniority} está fora do objetivo para Node.js`,
+      );
       matchedRules.push(`NODE_${classification.seniority}_REJECT`);
       return true;
     }
 
     if (
       classification.track === JobTrack.PHP &&
-      PHP_REJECTED_SENIORITIES.includes(classification.seniority as (typeof PHP_REJECTED_SENIORITIES)[number])
+      PHP_REJECTED_SENIORITIES.includes(
+        classification.seniority as (typeof PHP_REJECTED_SENIORITIES)[number],
+      )
     ) {
-      reasons.push(`Senioridade ${classification.seniority} está fora do objetivo para PHP`);
+      reasons.push(
+        `Senioridade ${classification.seniority} está fora do objetivo para PHP`,
+      );
       matchedRules.push(`PHP_${classification.seniority}_REJECT`);
       return true;
     }
@@ -158,7 +187,11 @@ export class JobDecisionService {
 
     if (classification.track === JobTrack.PHP) {
       const legacySkills = ['PHP 5', 'CodeIgniter', 'Zend legado', 'jQuery'];
-      if (classification.detectedSkills.some((skill) => legacySkills.includes(skill))) {
+      if (
+        classification.detectedSkills.some((skill) =>
+          legacySkills.includes(skill),
+        )
+      ) {
         warnings.push('Stack PHP possui sinais de legado');
       }
     }
@@ -166,25 +199,41 @@ export class JobDecisionService {
     return false;
   }
 
-  private requiresSeniorityReview(track: JobTrack, seniority: Seniority): boolean {
+  private requiresSeniorityReview(
+    track: JobTrack,
+    seniority: Seniority,
+  ): boolean {
     return (
       (track === JobTrack.NODE && seniority === Seniority.MID) ||
       (track === JobTrack.PHP && seniority === Seniority.TRAINEE)
     );
   }
 
-  private isAmbiguous(classification: JobDecisionInput['classification']): boolean {
-    return classification.warnings.some((warning) => warning.includes('força semelhante'));
+  private isAmbiguous(
+    classification: JobDecisionInput['classification'],
+  ): boolean {
+    return classification.warnings.some((warning) =>
+      warning.includes('força semelhante'),
+    );
   }
 
-  private acceptReason(classification: JobDecisionInput['classification']): string {
-    const label = classification.track === JobTrack.NODE_INTERNSHIP ? 'Node.js Estágio' : classification.track;
+  private acceptReason(
+    classification: JobDecisionInput['classification'],
+  ): string {
+    const label =
+      classification.track === JobTrack.NODE_INTERNSHIP
+        ? 'Node.js Estágio'
+        : classification.track;
     return `Vaga ${label} dentro das trilhas do perfil`;
   }
 
-  private acceptRule(classification: JobDecisionInput['classification']): string {
-    if (classification.track === JobTrack.NODE_INTERNSHIP) return 'NODE_INTERNSHIP_ACCEPT';
-    if (classification.track === JobTrack.NODE) return `NODE_${classification.seniority}_ACCEPT`;
+  private acceptRule(
+    classification: JobDecisionInput['classification'],
+  ): string {
+    if (classification.track === JobTrack.NODE_INTERNSHIP)
+      return 'NODE_INTERNSHIP_ACCEPT';
+    if (classification.track === JobTrack.NODE)
+      return `NODE_${classification.seniority}_ACCEPT`;
     return `PHP_${classification.seniority}_ACCEPT`;
   }
 }

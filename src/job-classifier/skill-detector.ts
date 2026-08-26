@@ -8,34 +8,38 @@ interface SkillDefinition {
   stack: 'NODE' | 'PHP' | 'OTHER' | null;
 }
 
+const skillAliases: Readonly<Record<string, readonly string[]>> = {
+  'REST API': ['REST API', 'RESTful', 'API REST', 'APIs REST'],
+};
+
 const skillDefinitions: readonly SkillDefinition[] = [
   ...SEARCH_PROFILE.node.technologies.core.map((name) => ({
     name,
-    aliases: [name],
+    aliases: skillAliases[name] ?? [name],
     positive: true,
     stack: 'NODE' as const,
   })),
   ...SEARCH_PROFILE.node.technologies.strong.map((name) => ({
     name,
-    aliases: [name],
+    aliases: skillAliases[name] ?? [name],
     positive: true,
     stack: 'NODE' as const,
   })),
   ...SEARCH_PROFILE.node.technologies.complementary!.map((name) => ({
     name,
-    aliases: [name],
+    aliases: skillAliases[name] ?? [name],
     positive: true,
     stack: 'NODE' as const,
   })),
   ...SEARCH_PROFILE.php.technologies.core.map((name) => ({
     name,
-    aliases: [name],
+    aliases: skillAliases[name] ?? [name],
     positive: true,
     stack: 'PHP' as const,
   })),
   ...SEARCH_PROFILE.php.technologies.strong.map((name) => ({
     name,
-    aliases: [name],
+    aliases: skillAliases[name] ?? [name],
     positive: true,
     stack: 'PHP' as const,
   })),
@@ -52,9 +56,19 @@ const skillDefinitions: readonly SkillDefinition[] = [
     stack: 'PHP' as const,
   })),
   { name: 'Java', aliases: ['java'], positive: false, stack: 'OTHER' },
-  { name: 'Spring', aliases: ['spring', 'spring boot'], positive: false, stack: 'OTHER' },
+  {
+    name: 'Spring',
+    aliases: ['spring', 'spring boot'],
+    positive: false,
+    stack: 'OTHER',
+  },
   { name: 'C#', aliases: ['c#'], positive: false, stack: 'OTHER' },
-  { name: '.NET', aliases: ['.net', 'dotnet'], positive: false, stack: 'OTHER' },
+  {
+    name: '.NET',
+    aliases: ['.net', 'dotnet'],
+    positive: false,
+    stack: 'OTHER',
+  },
   { name: 'Go', aliases: ['go', 'golang'], positive: false, stack: 'OTHER' },
   { name: 'Ruby', aliases: ['ruby'], positive: false, stack: 'OTHER' },
   { name: 'Python', aliases: ['python'], positive: false, stack: 'OTHER' },

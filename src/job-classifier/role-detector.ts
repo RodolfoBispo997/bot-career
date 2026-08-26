@@ -1,7 +1,10 @@
 import { RoleType } from '../search-profile/types';
 import { hasTerm, normalizeText } from './text-normalizer';
 
-export function detectRole(title: string, description: string): RoleType | 'OTHER' {
+export function detectRole(
+  title: string,
+  description: string,
+): RoleType | 'OTHER' {
   const normalizedTitle = normalizeText(title);
   const text = normalizeText(`${title} ${description}`);
 
@@ -13,16 +16,22 @@ export function detectRole(title: string, description: string): RoleType | 'OTHE
     return RoleType.BACKEND;
   }
 
-  if (hasTerm(normalizedTitle, ['software engineer', 'engenheiro de software', 'engenharia de software'])) {
+  if (
+    hasTerm(normalizedTitle, [
+      'software engineer',
+      'engenheiro de software',
+      'engenharia de software',
+    ])
+  ) {
     return RoleType.SOFTWARE_ENGINEERING;
   }
 
   const genericSoftwareDevelopmentTitle = hasTerm(normalizedTitle, [
-      'software developer',
-      'desenvolvedor de software',
-      'desenvolvimento',
-      'analista desenvolvedor',
-    ]);
+    'software developer',
+    'desenvolvedor de software',
+    'desenvolvimento',
+    'analista desenvolvedor',
+  ]);
 
   if (
     genericSoftwareDevelopmentTitle &&
@@ -39,15 +48,37 @@ export function detectRole(title: string, description: string): RoleType | 'OTHE
     return RoleType.FULLSTACK;
   }
 
-  if (hasTerm(text, ['backend', 'back-end', 'back end', 'apis', 'services', 'server-side'])) {
+  if (
+    hasTerm(text, [
+      'backend',
+      'back-end',
+      'back end',
+      'apis',
+      'services',
+      'server-side',
+    ])
+  ) {
     return RoleType.BACKEND;
   }
 
-  if (hasTerm(text, ['software engineer', 'engenheiro de software', 'engenharia de software'])) {
+  if (
+    hasTerm(text, [
+      'software engineer',
+      'engenheiro de software',
+      'engenharia de software',
+    ])
+  ) {
     return RoleType.SOFTWARE_ENGINEERING;
   }
 
-  if (hasTerm(text, ['software developer', 'desenvolvedor de software', 'desenvolvimento de software', 'analista desenvolvedor'])) {
+  if (
+    hasTerm(text, [
+      'software developer',
+      'desenvolvedor de software',
+      'desenvolvimento de software',
+      'analista desenvolvedor',
+    ])
+  ) {
     return RoleType.SOFTWARE_DEVELOPMENT;
   }
 

@@ -42,6 +42,8 @@ O classificador determinístico pode ser usado em `POST http://localhost:3000/jo
 
 A decisão inicial pode ser avaliada em `POST http://localhost:3000/job-decision/evaluate`. O endpoint classifica a vaga e retorna a decisão, motivos, warnings e regras aplicadas sem persistir dados.
 
+O score determinístico pode ser avaliado em `POST http://localhost:3000/job-score/evaluate`. O fluxo chama classificação, decisão e score, retornando os três resultados sem persistência.
+
 ## Testes
 
 ```bash

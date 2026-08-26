@@ -6,7 +6,10 @@ import { JobTrack, RoleType, Seniority } from '../src/search-profile/types';
 
 const service = new JobClassifierService();
 
-function classify(title: string, description: string): ReturnType<typeof service.classify> {
+function classify(
+  title: string,
+  description: string,
+): ReturnType<typeof service.classify> {
   const input: JobClassificationInput = {
     title,
     description,
@@ -133,7 +136,10 @@ describe('JobClassifierService', () => {
   });
 
   it('does not infer Node or PHP fullstack from frontend alone', () => {
-    const result = classify('Frontend React Developer', 'React, CSS e acessibilidade.');
+    const result = classify(
+      'Frontend React Developer',
+      'React, CSS e acessibilidade.',
+    );
 
     expect(result.roleType).toBe('OTHER');
     expect(result.track).toBe(JobTrack.OTHER);

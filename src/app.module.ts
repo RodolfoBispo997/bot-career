@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './health/health.module';
 import { JobClassifierModule } from './job-classifier/job-classifier.module';
 import { JobDecisionModule } from './job-decision/job-decision.module';
+import { JobScoreModule } from './job-score/job-score.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SearchProfileModule } from './search-profile/search-profile.module';
@@ -15,6 +16,7 @@ import { SearchProfileModule } from './search-profile/search-profile.module';
     JobsModule,
     JobClassifierModule,
     JobDecisionModule,
+    JobScoreModule,
     SearchProfileModule,
   ],
 })

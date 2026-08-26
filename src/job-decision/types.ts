@@ -1,6 +1,9 @@
 import { EmploymentType, WorkMode } from '@prisma/client';
 import { SearchProfile } from '../search-profile/types';
-import { JobClassificationInput, JobClassificationResult } from '../job-classifier/types';
+import {
+  JobClassificationInput,
+  JobClassificationResult,
+} from '../job-classifier/types';
 
 export type JobDecision = 'ACCEPT' | 'REVIEW' | 'REVIEW_LOCATION' | 'REJECT';
 

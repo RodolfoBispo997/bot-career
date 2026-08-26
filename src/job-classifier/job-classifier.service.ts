@@ -20,11 +20,18 @@ export class JobClassifierService {
       detectedSkills,
     );
     const isInternship = seniorityDetection.seniority === Seniority.INTERNSHIP;
-    const track = this.detectTrack(isInternship, stackDetection.primaryStack, stackDetection.nodeIsReal);
+    const track = this.detectTrack(
+      isInternship,
+      stackDetection.primaryStack,
+      stackDetection.nodeIsReal,
+    );
     const signals = [
       ...this.skillSignals(detectedSkills),
       ...stackDetection.signals,
-      ...this.senioritySignals(seniorityDetection.seniority, seniorityDetection.source),
+      ...this.senioritySignals(
+        seniorityDetection.seniority,
+        seniorityDetection.source,
+      ),
     ];
 
     if (roleType !== 'OTHER') {
@@ -46,7 +53,9 @@ export class JobClassifierService {
       isPotentiallyEligible: track !== JobTrack.OTHER,
       signals,
       warnings: stackDetection.warnings.concat(
-        seniorityDetection.source === 'none' ? ['Senioridade não explícita'] : [],
+        seniorityDetection.source === 'none'
+          ? ['Senioridade não explícita']
+          : [],
       ),
     };
   }
@@ -83,6 +92,8 @@ export class JobClassifierService {
   ): string[] {
     return source === 'none'
       ? []
-      : [`senioridade ${seniority} identificada em ${source === 'title' ? 'título' : 'descrição'}`];
+      : [
+          `senioridade ${seniority} identificada em ${source === 'title' ? 'título' : 'descrição'}`,
+        ];
   }
 }

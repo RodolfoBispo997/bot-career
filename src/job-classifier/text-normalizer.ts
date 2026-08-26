@@ -13,10 +13,14 @@ export function combineJobText(title: string, description: string): string {
 
 export function hasTerm(text: string, aliases: readonly string[]): boolean {
   return aliases.some((alias) => {
-    const escapedAlias = normalizeText(alias).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`(^|[^a-z0-9+#])${escapedAlias}(?=$|[^a-z0-9+#])`, 'i').test(
-      text,
+    const escapedAlias = normalizeText(alias).replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&',
     );
+    return new RegExp(
+      `(^|[^a-z0-9+#])${escapedAlias}(?=$|[^a-z0-9+#])`,
+      'i',
+    ).test(text);
   });
 }
 

@@ -4,7 +4,10 @@ import { hasTerm, normalizeText } from './text-normalizer';
 const seniorityRules: readonly [Seniority, readonly string[]][] = [
   [Seniority.INTERNSHIP, ['estagio', 'estagiario', 'intern', 'internship']],
   [Seniority.TRAINEE, ['trainee']],
-  [Seniority.JUNIOR_MID, ['junior/pleno', 'jr/pl', 'junior to mid', 'junior-mid']],
+  [
+    Seniority.JUNIOR_MID,
+    ['junior/pleno', 'jr/pl', 'junior to mid', 'junior-mid'],
+  ],
   [Seniority.MID_SENIOR, ['pleno/senior', 'mid/senior']],
   [Seniority.PRINCIPAL, ['principal']],
   [Seniority.STAFF, ['staff']],
@@ -14,7 +17,10 @@ const seniorityRules: readonly [Seniority, readonly string[]][] = [
   [Seniority.JUNIOR, ['junior', 'jr']],
 ];
 
-export function detectSeniority(title: string, description: string): {
+export function detectSeniority(
+  title: string,
+  description: string,
+): {
   seniority: Seniority;
   source: 'title' | 'description' | 'none';
 } {
@@ -29,7 +35,8 @@ export function detectSeniority(title: string, description: string): {
 
   const positionContext =
     /(?:nivel|senioridade|vaga para|buscamos|procuramos|contratando).{0,35}/;
-  const contextualDescription = normalizedDescription.match(positionContext)?.[0] ?? '';
+  const contextualDescription =
+    normalizedDescription.match(positionContext)?.[0] ?? '';
 
   for (const [seniority, aliases] of seniorityRules) {
     if (hasTerm(contextualDescription, aliases)) {

@@ -12,7 +12,14 @@ const stacks: readonly StackEvidence[] = [
   {
     name: 'NODE',
     aliases: ['node', 'node.js', 'nodejs'],
-    relatedSkills: ['Node.js', 'TypeScript', 'NestJS', 'Express', 'Fastify', 'Prisma'],
+    relatedSkills: [
+      'Node.js',
+      'TypeScript',
+      'NestJS',
+      'Express',
+      'Fastify',
+      'Prisma',
+    ],
     titleWeight: 6,
   },
   {
@@ -33,9 +40,24 @@ const stacks: readonly StackEvidence[] = [
     relatedSkills: ['Python'],
     titleWeight: 5,
   },
-  { name: 'C#', aliases: ['c#'], relatedSkills: ['C#', '.NET'], titleWeight: 5 },
-  { name: '.NET', aliases: ['.net', 'dotnet'], relatedSkills: ['.NET', 'C#'], titleWeight: 5 },
-  { name: 'GO', aliases: ['go', 'golang'], relatedSkills: ['Go'], titleWeight: 5 },
+  {
+    name: 'C#',
+    aliases: ['c#'],
+    relatedSkills: ['C#', '.NET'],
+    titleWeight: 5,
+  },
+  {
+    name: '.NET',
+    aliases: ['.net', 'dotnet'],
+    relatedSkills: ['.NET', 'C#'],
+    titleWeight: 5,
+  },
+  {
+    name: 'GO',
+    aliases: ['go', 'golang'],
+    relatedSkills: ['Go'],
+    titleWeight: 5,
+  },
   { name: 'RUBY', aliases: ['ruby'], relatedSkills: ['Ruby'], titleWeight: 5 },
 ];
 
@@ -59,10 +81,13 @@ export function detectPrimaryStack(
   for (const stack of stacks) {
     const titleMatch = hasTerm(normalizedTitle, stack.aliases);
     const occurrences = countTerm(fullText, stack.aliases);
-    const relatedSkillCount = detectedSkills.filter(
-      (skill) => stack.relatedSkills.includes(skill.name),
+    const relatedSkillCount = detectedSkills.filter((skill) =>
+      stack.relatedSkills.includes(skill.name),
     ).length;
-    let score = occurrences + relatedSkillCount * 2 + (titleMatch ? stack.titleWeight : 0);
+    let score =
+      occurrences +
+      relatedSkillCount * 2 +
+      (titleMatch ? stack.titleWeight : 0);
 
     const differentialPattern = new RegExp(
       `(?:${stack.aliases.map(escapeRegex).join('|')}).{0,35}(diferencial|plus|nice to have|desejavel)`,
@@ -74,7 +99,9 @@ export function detectPrimaryStack(
     scores.set(stack.name, score);
   }
 
-  const ranked = [...scores.entries()].sort((left, right) => right[1] - left[1]);
+  const ranked = [...scores.entries()].sort(
+    (left, right) => right[1] - left[1],
+  );
   const [primaryStack, primaryScore] = ranked[0] ?? ['OTHER', 0];
   const secondScore = ranked[1]?.[1] ?? 0;
   const warnings: string[] = [];
@@ -93,7 +120,9 @@ export function detectPrimaryStack(
   }
 
   const nodeScore = scores.get('NODE') ?? 0;
-  const nodeIsReal = nodeScore > 0 && !isDifferential(normalizedDescription, ['node', 'node.js', 'nodejs']);
+  const nodeIsReal =
+    nodeScore > 0 &&
+    !isDifferential(normalizedDescription, ['node', 'node.js', 'nodejs']);
 
   return {
     primaryStack,
