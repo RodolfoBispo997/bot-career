@@ -10,6 +10,8 @@ export interface JobClassificationInput {
 }
 
 export interface JobClassificationResult {
+  isSoftwareRole: boolean;
+  softwareRoleConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
   track: JobTrack;
   seniority: Seniority;
   roleType: RoleType | 'OTHER';

@@ -4,6 +4,7 @@ import { detectSkills } from './skill-detector';
 import { detectRole } from './role-detector';
 import { detectPrimaryStack } from './stack-detector';
 import { detectSeniority } from './seniority-detector';
+import { detectSoftwareRole } from './software-role-detector';
 import { combineJobText } from './text-normalizer';
 import { JobClassificationInput, JobClassificationResult } from './types';
 
@@ -19,12 +20,15 @@ export class JobClassifierService {
       input.description,
       detectedSkills,
     );
+    const softwareRole = detectSoftwareRole(input.title, input.description);
     const isInternship = seniorityDetection.seniority === Seniority.INTERNSHIP;
-    const track = this.detectTrack(
+    const track = softwareRole.isSoftwareRole
+      ? this.detectTrack(
       isInternship,
       stackDetection.primaryStack,
       stackDetection.nodeIsReal,
-    );
+        )
+      : JobTrack.OTHER;
     const signals = [
       ...this.skillSignals(detectedSkills),
       ...stackDetection.signals,
@@ -32,6 +36,7 @@ export class JobClassifierService {
         seniorityDetection.seniority,
         seniorityDetection.source,
       ),
+      ...softwareRole.signals,
     ];
 
     if (roleType !== 'OTHER') {
@@ -39,6 +44,8 @@ export class JobClassifierService {
     }
 
     return {
+      isSoftwareRole: softwareRole.isSoftwareRole,
+      softwareRoleConfidence: softwareRole.confidence,
       track,
       seniority: seniorityDetection.seniority,
       roleType,

@@ -203,6 +203,8 @@ describe('JobDecisionService', () => {
       location: 'São Paulo - SP',
     };
     const classification = {
+      isSoftwareRole: true,
+      softwareRoleConfidence: 'HIGH' as const,
       track: JobTrack.NODE,
       seniority: Seniority.UNSPECIFIED,
       roleType: RoleType.BACKEND,
