@@ -24,9 +24,9 @@ export class JobClassifierService {
     const isInternship = seniorityDetection.seniority === Seniority.INTERNSHIP;
     const track = softwareRole.isSoftwareRole
       ? this.detectTrack(
-      isInternship,
-      stackDetection.primaryStack,
-      stackDetection.nodeIsReal,
+          isInternship,
+          stackDetection.primaryStack,
+          stackDetection.nodeIsReal,
         )
       : JobTrack.OTHER;
     const signals = [

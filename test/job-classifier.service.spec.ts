@@ -23,19 +23,52 @@ function classify(
 
 describe('JobClassifierService', () => {
   it.each([
-    ['Enfermeiro (a)', 'Experiência com sistemas internos, Node.js e ferramentas digitais.', false, JobTrack.OTHER],
-    ['Especialista em Distribuição de Conteúdo e Projetos', 'Integrações e contato eventual com aplicações Node.js.', false, JobTrack.OTHER],
-    ['Backend Developer Jr', 'Node.js, TypeScript, APIs REST.', true, JobTrack.NODE],
-    ['Software Engineer', 'Node.js, PostgreSQL e microsserviços.', true, JobTrack.NODE],
-    ['Analista', 'Responsável pelo desenvolvimento backend em Node.js, APIs REST, TypeScript e PostgreSQL.', true, JobTrack.NODE],
-    ['Analista Financeiro', 'Uso de sistemas internos e contato com APIs.', false, JobTrack.OTHER],
-  ])('detects software relevance for %s', (title, description, isSoftwareRole, track) => {
-    const result = classify(title, description);
+    [
+      'Enfermeiro (a)',
+      'Experiência com sistemas internos, Node.js e ferramentas digitais.',
+      false,
+      JobTrack.OTHER,
+    ],
+    [
+      'Especialista em Distribuição de Conteúdo e Projetos',
+      'Integrações e contato eventual com aplicações Node.js.',
+      false,
+      JobTrack.OTHER,
+    ],
+    [
+      'Backend Developer Jr',
+      'Node.js, TypeScript, APIs REST.',
+      true,
+      JobTrack.NODE,
+    ],
+    [
+      'Software Engineer',
+      'Node.js, PostgreSQL e microsserviços.',
+      true,
+      JobTrack.NODE,
+    ],
+    [
+      'Analista',
+      'Responsável pelo desenvolvimento backend em Node.js, APIs REST, TypeScript e PostgreSQL.',
+      true,
+      JobTrack.NODE,
+    ],
+    [
+      'Analista Financeiro',
+      'Uso de sistemas internos e contato com APIs.',
+      false,
+      JobTrack.OTHER,
+    ],
+  ])(
+    'detects software relevance for %s',
+    (title, description, isSoftwareRole, track) => {
+      const result = classify(title, description);
 
-    expect(result.isSoftwareRole).toBe(isSoftwareRole);
-    expect(result.track).toBe(track);
-    expect(result.isPotentiallyEligible).toBe(isSoftwareRole);
-  });
+      expect(result.isSoftwareRole).toBe(isSoftwareRole);
+      expect(result.track).toBe(track);
+      expect(result.isPotentiallyEligible).toBe(isSoftwareRole);
+    },
+  );
 
   it.each([
     [

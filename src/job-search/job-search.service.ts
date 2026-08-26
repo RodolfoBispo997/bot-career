@@ -7,6 +7,7 @@ import { RemotiveProvider } from '../sources/remotive.provider';
 import { GreenhouseProvider } from '../sources/greenhouse.provider';
 import { NormalizedJobInput } from '../sources/types';
 import { JobSearchResult } from './types';
+import { detectEligibilityReview } from './eligibility-review';
 
 @Injectable()
 export class JobSearchService {
@@ -21,11 +22,16 @@ export class JobSearchService {
   async search(limit = 100): Promise<JobSearchResult> {
     const boundedLimit = Math.max(1, Math.min(limit, 100));
     const results = await Promise.all([
-      this.collect('remotive', () => this.remotive.search(boundedLimit)),
+      this.collect('remotive', () => this.remotive.search(100)),
       this.collect('greenhouse', () => this.greenhouse.search(boundedLimit)),
     ]);
     const sources = Object.fromEntries(
-      results.map((result) => [result.name, result.status]),
+      results.map((result) => [
+        result.name,
+        result.name === 'greenhouse'
+          ? { ...result.status, boards: this.greenhouse.getBoardStats() }
+          : result.status,
+      ]),
     );
     const normalizedJobs = this.deduplicate(
       results.flatMap((result) => result.jobs),
@@ -43,9 +49,35 @@ export class JobSearchService {
       );
     });
 
+    const recommendedJobs = jobs
+      .filter(
+        (job) =>
+          job.decision.decision !== 'REJECT' &&
+          job.score.score >= 60 &&
+          !job.eligibilityReviewRequired,
+      )
+      .slice(0, boundedLimit);
+    const lowScoreJobs = jobs
+      .filter(
+        (job) =>
+          job.decision.decision !== 'REJECT' &&
+          job.score.score < 60 &&
+          !job.eligibilityReviewRequired,
+      )
+      .slice(0, boundedLimit);
+    const eligibilityReviewJobs = jobs
+      .filter(
+        (job) =>
+          job.decision.decision !== 'REJECT' && job.eligibilityReviewRequired,
+      )
+      .slice(0, boundedLimit);
+
     return {
       summary: {
         found: normalizedJobs.length,
+        recommended: recommendedJobs.length,
+        lowScore: lowScoreJobs.length,
+        eligibilityReview: eligibilityReviewJobs.length,
         accepted: jobs.filter((job) => job.decision.decision === 'ACCEPT')
           .length,
         review: jobs.filter((job) => job.decision.decision === 'REVIEW').length,
@@ -55,7 +87,10 @@ export class JobSearchService {
         rejected: jobs.filter((job) => job.decision.decision === 'REJECT')
           .length,
       },
-      jobs: jobs.filter((job) => job.decision.decision !== 'REJECT'),
+      jobs: recommendedJobs,
+      recommendedJobs,
+      lowScoreJobs,
+      eligibilityReviewJobs,
       sources,
     };
   }
@@ -111,6 +146,7 @@ export class JobSearchService {
       profile: SEARCH_PROFILE,
     });
 
-    return { ...job, classification, decision, score };
+    const eligibility = detectEligibilityReview(job.title, job.description);
+    return { ...job, classification, decision, score, ...eligibility };
   }
 }

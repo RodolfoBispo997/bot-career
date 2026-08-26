@@ -33,6 +33,7 @@ describe('JobSearchService', () => {
     const result = provider.normalize({
       id: 77,
       title: 'Backend Node.js Developer',
+      company_name: 'Stone',
       content: '<p>Node.js, TypeScript and PostgreSQL.</p>',
       location: { name: 'São Paulo, Brazil' },
       absolute_url: 'https://boards.greenhouse.io/stone/jobs/77',
