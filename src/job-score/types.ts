@@ -1,5 +1,8 @@
 import { SearchProfile } from '../search-profile/types';
-import { JobClassificationInput, JobClassificationResult } from '../job-classifier/types';
+import {
+  JobClassificationInput,
+  JobClassificationResult,
+} from '../job-classifier/types';
 import { JobDecisionResult } from '../job-decision/types';
 
 export interface JobScoreInput {

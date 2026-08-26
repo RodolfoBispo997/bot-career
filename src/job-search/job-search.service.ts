@@ -4,40 +4,97 @@ import { JobDecisionService } from '../job-decision/job-decision.service';
 import { JobScoreService } from '../job-score/job-score.service';
 import { SEARCH_PROFILE } from '../search-profile/search-profile.config';
 import { RemotiveProvider } from '../sources/remotive.provider';
+import { GreenhouseProvider } from '../sources/greenhouse.provider';
 import { NormalizedJobInput } from '../sources/types';
 import { JobSearchResult } from './types';
 
 @Injectable()
 export class JobSearchService {
   constructor(
-    private readonly provider: RemotiveProvider,
+    private readonly remotive: RemotiveProvider,
+    private readonly greenhouse: GreenhouseProvider,
     private readonly classifier: JobClassifierService,
     private readonly decisionService: JobDecisionService,
     private readonly scoreService: JobScoreService,
   ) {}
 
   async search(limit = 100): Promise<JobSearchResult> {
-    const normalizedJobs = await this.provider.search(Math.max(1, Math.min(limit, 100)));
+    const boundedLimit = Math.max(1, Math.min(limit, 100));
+    const results = await Promise.all([
+      this.collect('remotive', () => this.remotive.search(boundedLimit)),
+      this.collect('greenhouse', () => this.greenhouse.search(boundedLimit)),
+    ]);
+    const sources = Object.fromEntries(
+      results.map((result) => [result.name, result.status]),
+    );
+    const normalizedJobs = this.deduplicate(
+      results.flatMap((result) => result.jobs),
+    );
     const jobs = normalizedJobs.map((job) => this.process(job));
 
     jobs.sort((left, right) => {
       const leftRejected = left.decision.decision === 'REJECT' ? 1 : 0;
       const rightRejected = right.decision.decision === 'REJECT' ? 1 : 0;
       if (leftRejected !== rightRejected) return leftRejected - rightRejected;
-      if (left.score.score !== right.score.score) return right.score.score - left.score.score;
-      return (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0);
+      if (left.score.score !== right.score.score)
+        return right.score.score - left.score.score;
+      return (
+        (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0)
+      );
     });
 
     return {
       summary: {
-        found: jobs.length,
-        accepted: jobs.filter((job) => job.decision.decision === 'ACCEPT').length,
+        found: normalizedJobs.length,
+        accepted: jobs.filter((job) => job.decision.decision === 'ACCEPT')
+          .length,
         review: jobs.filter((job) => job.decision.decision === 'REVIEW').length,
-        reviewLocation: jobs.filter((job) => job.decision.decision === 'REVIEW_LOCATION').length,
-        rejected: jobs.filter((job) => job.decision.decision === 'REJECT').length,
+        reviewLocation: jobs.filter(
+          (job) => job.decision.decision === 'REVIEW_LOCATION',
+        ).length,
+        rejected: jobs.filter((job) => job.decision.decision === 'REJECT')
+          .length,
       },
       jobs: jobs.filter((job) => job.decision.decision !== 'REJECT'),
+      sources,
     };
+  }
+
+  private async collect(
+    name: string,
+    search: () => Promise<NormalizedJobInput[]>,
+  ) {
+    try {
+      const jobs = await search();
+      return {
+        name,
+        jobs,
+        status: { status: 'ok' as const, found: jobs.length },
+      };
+    } catch (error) {
+      return {
+        name,
+        jobs: [],
+        status: {
+          status: 'error' as const,
+          found: 0,
+          error:
+            error instanceof Error ? error.message : 'Unknown provider error',
+        },
+      };
+    }
+  }
+
+  private deduplicate(jobs: NormalizedJobInput[]): NormalizedJobInput[] {
+    const seen = new Set<string>();
+    return jobs.filter((job) => {
+      const key = job.externalId
+        ? `${job.source}:${job.externalId}`
+        : `${job.source}:${job.sourceUrl.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   private process(job: NormalizedJobInput) {

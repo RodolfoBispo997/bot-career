@@ -71,7 +71,9 @@ describe('JobScoreService', () => {
 
     expect(result.score).toBeGreaterThanOrEqual(60);
     expect(result.priority).not.toBe('REJECTED');
-    expect(result.penalties).toContain('Senioridade Pleno está acima do foco principal Node.js');
+    expect(result.penalties).toContain(
+      'Senioridade Pleno está acima do foco principal Node.js',
+    );
   });
 
   it('keeps a rejected Node Senior vacancy rejected despite strong technical signals', () => {
@@ -156,7 +158,9 @@ describe('JobScoreService', () => {
     );
 
     expect(result.priority).not.toBe('REJECTED');
-    expect(result.penalties).not.toContain('Stack principal possui sinais de ambiguidade');
+    expect(result.penalties).not.toContain(
+      'Stack principal possui sinais de ambiguidade',
+    );
   });
 
   it('penalizes an explicitly ambiguous stack', () => {
@@ -185,7 +189,9 @@ describe('JobScoreService', () => {
       profile: SEARCH_PROFILE,
     });
 
-    expect(ambiguous.penalties).toContain('Stack principal possui sinais de ambiguidade');
+    expect(ambiguous.penalties).toContain(
+      'Stack principal possui sinais de ambiguidade',
+    );
     expect(ambiguous.score).toBeLessThan(clear.score);
   });
 
@@ -196,15 +202,24 @@ describe('JobScoreService', () => {
   });
 
   it('returns zero for OTHER', () => {
-    const result = evaluate('Frontend React Developer', 'React, CSS e acessibilidade.');
+    const result = evaluate(
+      'Frontend React Developer',
+      'React, CSS e acessibilidade.',
+    );
 
     expect(result.score).toBe(0);
     expect(result.priority).toBe('REJECTED');
   });
 
   it('ranks Node Junior above Node Mid with equivalent stack', () => {
-    const junior = evaluate('Backend Node.js Junior', 'Node.js, TypeScript, PostgreSQL.');
-    const mid = evaluate('Backend Node.js Pleno', 'Node.js, TypeScript, PostgreSQL.');
+    const junior = evaluate(
+      'Backend Node.js Junior',
+      'Node.js, TypeScript, PostgreSQL.',
+    );
+    const mid = evaluate(
+      'Backend Node.js Pleno',
+      'Node.js, TypeScript, PostgreSQL.',
+    );
 
     expect(junior.score).toBeGreaterThan(mid.score);
   });
@@ -213,7 +228,11 @@ describe('JobScoreService', () => {
     const results = [
       evaluate('Backend Node.js Junior', 'Node.js, TypeScript.'),
       evaluate('Desenvolvedor PHP Pleno', 'PHP, Laravel, MySQL.'),
-      evaluate('Estágio em Desenvolvimento', 'Node.js.', EmploymentType.INTERNSHIP),
+      evaluate(
+        'Estágio em Desenvolvimento',
+        'Node.js.',
+        EmploymentType.INTERNSHIP,
+      ),
       evaluate('Frontend React Developer', 'React.'),
     ];
 

@@ -47,8 +47,8 @@ export class RemotiveProvider implements JobProvider {
       const response = await fetch(
         `${this.endpoint}?search=node&limit=${Math.min(limit, 100)}`,
         {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
         },
       );
 
@@ -63,8 +63,11 @@ export class RemotiveProvider implements JobProvider {
 
       return jobs.map((job) => this.normalize(job));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown provider error';
-      throw new ServiceUnavailableException(`Unable to search Remotive: ${message}`);
+      const message =
+        error instanceof Error ? error.message : 'Unknown provider error';
+      throw new ServiceUnavailableException(
+        `Unable to search Remotive: ${message}`,
+      );
     } finally {
       clearTimeout(timeout);
     }
@@ -88,7 +91,8 @@ export class RemotiveProvider implements JobProvider {
   }
 
   private matchesSearchTerms(job: RemotiveJob): boolean {
-    const text = `${job.title ?? ''} ${stripHtml(job.description ?? '')}`.toLowerCase();
+    const text =
+      `${job.title ?? ''} ${stripHtml(job.description ?? '')}`.toLowerCase();
     return SEARCH_TERMS.some((term) => text.includes(term));
   }
 }

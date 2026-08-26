@@ -18,4 +18,12 @@ export interface JobSearchResult {
     rejected: number;
   };
   jobs: JobSearchResultItem[];
+  sources: Record<
+    string,
+    {
+      status: 'ok' | 'error';
+      found: number;
+      error?: string;
+    }
+  >;
 }
