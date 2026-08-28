@@ -65,10 +65,12 @@ export class ProgramathorProvider implements JobProvider {
       if (!title) continue;
       const description = stripHtml(card).replace(/\s+/g, ' ').trim();
       const id = match[1].match(/\/jobs\/(\d+)/i)?.[1];
-      const company = this.extractField(card, 'company|empresa');
       const location =
         this.extractField(card, 'location|local|cidade') ??
         this.findLocation(description);
+      const company =
+        this.extractField(card, 'company|empresa') ??
+        this.findCompany(description, title, location);
       jobs.push(
         this.normalize({
           id,
@@ -94,6 +96,25 @@ export class ProgramathorProvider implements JobProvider {
     );
     const value = field ? stripHtml(field[1]).replace(/\s+/g, ' ').trim() : '';
     return value || undefined;
+  }
+
+  private findCompany(
+    text: string,
+    title: string,
+    location?: string,
+  ): string | undefined {
+    const remainder = text.slice(text.indexOf(title) + title.length).trim();
+    const boundary = location
+      ? remainder.toLowerCase().indexOf(location.toLowerCase())
+      : -1;
+    const candidate = (boundary >= 0
+      ? remainder.slice(0, boundary)
+      : remainder.split(/\b(?:remoto|h[ií]brido|presencial|clt|pj)\b/i)[0]
+    )
+      .replace(/[|•·-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return candidate || undefined;
   }
 
   private findLocation(text: string): string | undefined {

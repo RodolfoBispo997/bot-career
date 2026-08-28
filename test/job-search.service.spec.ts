@@ -115,6 +115,16 @@ describe('JobSearchService', () => {
     global.fetch = originalFetch;
   });
 
+  it('keeps ProgramaThor company null when it is absent', () => {
+    const provider = new ProgramathorProvider();
+    expect(
+      provider.normalize({
+        title: 'Desenvolvedor Backend Node.js',
+        description: 'Node.js e NestJS',
+      }).company,
+    ).toBeNull();
+  });
+
   it('classifies and scores provider results through the pipeline', async () => {
     const provider = new RemotiveProvider();
     const greenhouse = new GreenhouseProvider();
