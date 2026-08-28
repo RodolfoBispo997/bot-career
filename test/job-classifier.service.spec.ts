@@ -167,6 +167,22 @@ describe('JobClassifierService', () => {
       RoleType.BACKEND,
       'NODE',
     ],
+    [
+      'Desenvolvedor Backend Node.js',
+      'Startup Sênior PJ Node.js e NestJS.',
+      JobTrack.NODE,
+      Seniority.SENIOR,
+      RoleType.BACKEND,
+      'NODE',
+    ],
+    [
+      'Desenvolvedor Backend Node.js',
+      'Pequena empresa Pleno CLT Node.js e NestJS.',
+      JobTrack.NODE,
+      Seniority.MID,
+      RoleType.BACKEND,
+      'NODE',
+    ],
   ])(
     'classifies %s',
     (title, description, track, seniority, roleType, primaryStack) => {

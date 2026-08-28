@@ -37,9 +37,13 @@ export function detectSeniority(
     /(?:nivel|senioridade|vaga para|buscamos|procuramos|contratando).{0,35}/;
   const contextualDescription =
     normalizedDescription.match(positionContext)?.[0] ?? '';
-  const structuredDescription = normalizedDescription.includes('ate r$')
-    ? normalizedDescription
-    : '';
+  const shortDescription = normalizedDescription.slice(0, 120);
+  const structuredDescription =
+    /\b(?:startup|empresa|remoto|hibrido|presencial|clt|pj)\b/.test(
+      shortDescription,
+    )
+      ? shortDescription
+      : '';
 
   for (const [seniority, aliases] of seniorityRules) {
     if (
