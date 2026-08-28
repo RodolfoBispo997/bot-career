@@ -120,6 +120,7 @@ export class ProgramathorProvider implements JobProvider {
   private findLocation(text: string): string | undefined {
     const locations = [
       'São Paulo',
+      'São Bernardo do Campo',
       'Barueri',
       'Osasco',
       'Alphaville',

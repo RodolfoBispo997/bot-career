@@ -125,6 +125,25 @@ describe('JobSearchService', () => {
     ).toBeNull();
   });
 
+  it('separates ProgramaThor company and location', async () => {
+    const provider = new ProgramathorProvider();
+    const originalFetch = global.fetch;
+    const mockedFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+    mockedFetch.mockResolvedValue({
+      ok: true,
+      text: async () =>
+        '<a href="/jobs/456-backend"><h2>Desenvolvedor Backend Node.js</h2>Forta Tech São Bernardo do Campo (Híbrido) Pequena/média empresa Pleno CLT</a>',
+    } as Response);
+    global.fetch = mockedFetch;
+    try {
+      await expect(provider.search(10)).resolves.toMatchObject([
+        { company: 'Forta Tech', location: 'São Bernardo do Campo' },
+      ]);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it('classifies and scores provider results through the pipeline', async () => {
     const provider = new RemotiveProvider();
     const greenhouse = new GreenhouseProvider();
