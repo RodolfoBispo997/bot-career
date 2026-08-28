@@ -101,6 +101,7 @@ export class VagasProvider implements JobProvider {
       const title = stripHtml(link[2]).replace(/\s+/g, ' ').trim();
       if (!title || /vencid[ao]/i.test(title)) continue;
       const description = stripHtml(card).replace(/\s+/g, ' ').trim();
+      const level = this.field(card, 'nivelVaga');
       const url = link[1].startsWith('http')
         ? link[1]
         : `https://www.vagas.com.br${link[1]}`;
@@ -109,7 +110,7 @@ export class VagasProvider implements JobProvider {
         this.normalize({
           id,
           title,
-          description,
+          description: level ? `Nível: ${level}. ${description}` : description,
           company: this.field(card, 'emprVaga'),
           location: this.locationField(card),
           employmentType: this.field(
@@ -137,7 +138,7 @@ export class VagasProvider implements JobProvider {
 
   private locationField(card: string): string | undefined {
     const match = card.match(
-      /<div[^>]+class=["'][^"']*\bvaga-local\b[^"']*["'][^>]*>([\s\S]*?)(?=<div[^>]+class=["'][^"']*\btooltip-place\b)/i,
+      /<(?:div|span)[^>]+class=["'][^"']*\bvaga-local\b[^"']*["'][^>]*>([\s\S]*?)(?=<div[^>]+class=["'][^"']*\btooltip-place\b|<\/(?:div|span)>)/i,
     );
     const value = match ? stripHtml(match[1]).replace(/\s+/g, ' ').trim() : '';
     return value || undefined;
@@ -156,7 +157,11 @@ export class VagasProvider implements JobProvider {
   private workMode(text: string): WorkMode {
     if (text.includes('híbrido') || text.includes('hybrid'))
       return WorkMode.HYBRID;
-    if (text.includes('remoto') || text.includes('remote'))
+    if (
+      text.includes('remoto') ||
+      text.includes('remote') ||
+      text.includes('home office')
+    )
       return WorkMode.REMOTE;
     if (text.includes('presencial') || text.includes('onsite'))
       return WorkMode.ONSITE;
