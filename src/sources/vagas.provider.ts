@@ -11,6 +11,7 @@ interface VagasJob {
   location?: string;
   url?: string;
   publishedAt?: string;
+  employmentType?: string;
 }
 
 const SEARCH_TERMS = [
@@ -41,10 +42,14 @@ export class VagasProvider implements JobProvider {
     const results = await Promise.all(
       SEARCH_QUERIES.map(async (query) => {
         try {
-          const response = await fetch(`${this.endpoint}${encodeURIComponent(query)}`, {
-            headers: { Accept: 'text/html' },
-          });
-          if (!response.ok) throw new Error(`Vagas.com.br returned HTTP ${response.status}`);
+          const response = await fetch(
+            `${this.endpoint}${encodeURIComponent(query)}`,
+            {
+              headers: { Accept: 'text/html' },
+            },
+          );
+          if (!response.ok)
+            throw new Error(`Vagas.com.br returned HTTP ${response.status}`);
           return this.parse(await response.text());
         } catch {
           return [];
@@ -66,7 +71,8 @@ export class VagasProvider implements JobProvider {
 
   normalize(job: VagasJob): NormalizedJobInput {
     const description = stripHtml(job.description ?? '');
-    const context = `${job.title ?? ''} ${description} ${job.location ?? ''}`.toLowerCase();
+    const context =
+      `${job.title ?? ''} ${description} ${job.location ?? ''}`.toLowerCase();
     return {
       externalId: job.id ?? null,
       title: job.title?.trim() || 'Untitled job',
@@ -74,7 +80,7 @@ export class VagasProvider implements JobProvider {
       description,
       location: job.location?.trim() || null,
       workMode: this.workMode(context),
-      employmentType: this.employmentType(context),
+      employmentType: this.employmentType(job.employmentType),
       source: JobSource.OTHER,
       sourceUrl: job.url ?? '',
       publishedAt: job.publishedAt ? this.date(job.publishedAt) : null,
@@ -84,15 +90,20 @@ export class VagasProvider implements JobProvider {
 
   private parse(html: string): NormalizedJobInput[] {
     const jobs: NormalizedJobInput[] = [];
-    const cards = /<li[^>]+class=["'][^"']*\bvaga\b[^"']*["'][^>]*>([\s\S]*?)<\/li>/gi;
+    const cards =
+      /<li[^>]+class=["'][^"']*\bvaga\b[^"']*["'][^>]*>([\s\S]*?)<\/li>/gi;
     for (const match of html.matchAll(cards)) {
       const card = match[0];
-      const link = card.match(/<a[^>]+class=["'][^"']*link-detalhes-vaga[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+      const link = card.match(
+        /<a[^>]+class=["'][^"']*link-detalhes-vaga[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i,
+      );
       if (!link) continue;
       const title = stripHtml(link[2]).replace(/\s+/g, ' ').trim();
       if (!title || /vencid[ao]/i.test(title)) continue;
       const description = stripHtml(card).replace(/\s+/g, ' ').trim();
-      const url = link[1].startsWith('http') ? link[1] : `https://www.vagas.com.br${link[1]}`;
+      const url = link[1].startsWith('http')
+        ? link[1]
+        : `https://www.vagas.com.br${link[1]}`;
       const id = card.match(/data-id-vaga=["']([^"']+)["']/i)?.[1];
       jobs.push(
         this.normalize({
@@ -101,6 +112,10 @@ export class VagasProvider implements JobProvider {
           description,
           company: this.field(card, 'emprVaga'),
           location: this.field(card, 'vaga-local'),
+          employmentType: this.field(
+            card,
+            'tipo-contratacao|regime|contratacao',
+          ),
           publishedAt: this.field(card, 'data-publicacao'),
           url,
         }),
@@ -131,17 +146,22 @@ export class VagasProvider implements JobProvider {
   }
 
   private workMode(text: string): WorkMode {
-    if (text.includes('híbrido') || text.includes('hybrid')) return WorkMode.HYBRID;
-    if (text.includes('remoto') || text.includes('remote')) return WorkMode.REMOTE;
-    if (text.includes('presencial') || text.includes('onsite')) return WorkMode.ONSITE;
+    if (text.includes('híbrido') || text.includes('hybrid'))
+      return WorkMode.HYBRID;
+    if (text.includes('remoto') || text.includes('remote'))
+      return WorkMode.REMOTE;
+    if (text.includes('presencial') || text.includes('onsite'))
+      return WorkMode.ONSITE;
     return WorkMode.UNKNOWN;
   }
 
-  private employmentType(text: string): EmploymentType {
-    if (text.includes('estágio') || text.includes('estagio')) return EmploymentType.INTERNSHIP;
-    if (text.includes('trainee')) return EmploymentType.TRAINEE;
-    if (/\bclt\b/.test(text)) return EmploymentType.CLT;
-    if (/\bpj\b/.test(text)) return EmploymentType.PJ;
+  private employmentType(explicit?: string): EmploymentType {
+    const value = explicit?.toLowerCase() ?? '';
+    if (value.includes('trainee')) return EmploymentType.TRAINEE;
+    if (value.includes('estágio') || value.includes('estagio'))
+      return EmploymentType.INTERNSHIP;
+    if (/\bclt\b/.test(value)) return EmploymentType.CLT;
+    if (/\bpj\b/.test(value)) return EmploymentType.PJ;
     return EmploymentType.UNKNOWN;
   }
 }

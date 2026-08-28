@@ -9,6 +9,7 @@ describe('VagasProvider', () => {
       title: 'Desenvolvedor Node.js',
       company: 'Acme',
       description: 'Node.js e backend. CLT.',
+      employmentType: 'CLT',
       location: 'São Paulo',
       url: 'https://www.vagas.com.br/vagas/v-123',
     });
@@ -29,12 +30,17 @@ describe('VagasProvider', () => {
     mockedFetch.mockResolvedValue({
       ok: true,
       text: async () =>
-        '<li class="vaga" data-id-vaga="456"><a class="link-detalhes-vaga" href="/vagas/v-456">Backend Node.js</a><span class="emprVaga">Acme</span><div class="vaga-local">São Paulo</div><span class="data-publicacao">2026-08-20</span></li>',
+        '<li class="vaga" data-id-vaga="456"><a class="link-detalhes-vaga" href="/vagas/v-456">Backend Node.js</a><span class="emprVaga">Acme</span><span class="nivelVaga">Júnior/Trainee</span><div class="vaga-local">São Paulo / SP</div><span class="data-publicacao">2026-08-20</span></li>',
     } as Response);
     global.fetch = mockedFetch;
     try {
       await expect(new VagasProvider().search(10)).resolves.toMatchObject([
-        { externalId: '456', title: 'Backend Node.js' },
+        {
+          externalId: '456',
+          title: 'Backend Node.js',
+          location: 'São Paulo / SP',
+          employmentType: EmploymentType.UNKNOWN,
+        },
       ]);
     } finally {
       global.fetch = originalFetch;
