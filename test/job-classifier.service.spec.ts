@@ -151,6 +151,22 @@ describe('JobClassifierService', () => {
       RoleType.BACKEND,
       'NODE',
     ],
+    [
+      'Desenvolvedor Full Stack Node.js',
+      'Até R$6.000 Júnior PJ. Node.js e React.',
+      JobTrack.NODE,
+      Seniority.JUNIOR,
+      RoleType.FULLSTACK,
+      'NODE',
+    ],
+    [
+      'Desenvolvedor Backend Node.js',
+      'Até R$7.000 Pleno CLT. Node.js e NestJS.',
+      JobTrack.NODE,
+      Seniority.MID,
+      RoleType.BACKEND,
+      'NODE',
+    ],
   ])(
     'classifies %s',
     (title, description, track, seniority, roleType, primaryStack) => {

@@ -37,9 +37,15 @@ export function detectSeniority(
     /(?:nivel|senioridade|vaga para|buscamos|procuramos|contratando).{0,35}/;
   const contextualDescription =
     normalizedDescription.match(positionContext)?.[0] ?? '';
+  const structuredDescription = normalizedDescription.includes('ate r$')
+    ? normalizedDescription
+    : '';
 
   for (const [seniority, aliases] of seniorityRules) {
-    if (hasTerm(contextualDescription, aliases)) {
+    if (
+      hasTerm(contextualDescription, aliases) ||
+      hasTerm(structuredDescription, aliases)
+    ) {
       return { seniority, source: 'description' };
     }
   }
