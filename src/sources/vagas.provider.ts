@@ -111,7 +111,7 @@ export class VagasProvider implements JobProvider {
           title,
           description,
           company: this.field(card, 'emprVaga'),
-          location: this.field(card, 'vaga-local'),
+          location: this.locationField(card),
           employmentType: this.field(
             card,
             'tipo-contratacao|regime|contratacao',
@@ -130,6 +130,14 @@ export class VagasProvider implements JobProvider {
         `<[^>]+class=["'][^"']*(?:${names})[^"']*["'][^>]*>([\\s\\S]*?)<\\/[^>]+>`,
         'i',
       ),
+    );
+    const value = match ? stripHtml(match[1]).replace(/\s+/g, ' ').trim() : '';
+    return value || undefined;
+  }
+
+  private locationField(card: string): string | undefined {
+    const match = card.match(
+      /<div[^>]+class=["'][^"']*\bvaga-local\b[^"']*["'][^>]*>([\s\S]*?)(?=<div[^>]+class=["'][^"']*\btooltip-place\b)/i,
     );
     const value = match ? stripHtml(match[1]).replace(/\s+/g, ' ').trim() : '';
     return value || undefined;
