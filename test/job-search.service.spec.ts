@@ -6,6 +6,7 @@ import { JobScoreService } from '../src/job-score/job-score.service';
 import { JobSearchService } from '../src/job-search/job-search.service';
 import { GreenhouseProvider } from '../src/sources/greenhouse.provider';
 import { RemotiveProvider } from '../src/sources/remotive.provider';
+import { ProgramathorProvider } from '../src/sources/programathor.provider';
 import { NormalizedJobInput } from '../src/sources/types';
 
 function normalizedJob(
@@ -77,26 +78,68 @@ describe('JobSearchService', () => {
     expect(result.publishedAt).toEqual(new Date('2026-08-25T12:00:00Z'));
   });
 
+  it('normalizes a ProgramaThor job', () => {
+    const provider = new ProgramathorProvider();
+    const result = provider.normalize({
+      id: 123,
+      title: 'Desenvolvedor Backend Node.js',
+      company: 'Thor Tech',
+      description: '<p>Node.js e NestJS. Regime PJ.</p>',
+      location: 'São Paulo',
+      url: 'https://programathor.com.br/jobs/123-backend',
+      publishedAt: '2026-08-25T12:00:00Z',
+    });
+    expect(result).toMatchObject({
+      externalId: '123',
+      title: 'Desenvolvedor Backend Node.js',
+      company: 'Thor Tech',
+      description: 'Node.js e NestJS. Regime PJ.',
+      location: 'São Paulo',
+      workMode: WorkMode.UNKNOWN,
+      employmentType: EmploymentType.PJ,
+      source: JobSource.OTHER,
+    });
+  });
+
+  it('ignores a ProgramaThor expired job', async () => {
+    const provider = new ProgramathorProvider();
+    const originalFetch = global.fetch;
+    const mockedFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+    mockedFetch.mockResolvedValue({
+      ok: true,
+      text: async () =>
+        '<a href="/jobs/123-backend"><h2>Vencida Backend Node.js</h2></a>',
+    } as Response);
+    global.fetch = mockedFetch;
+    await expect(provider.search(10)).resolves.toEqual([]);
+    global.fetch = originalFetch;
+  });
+
   it('classifies and scores provider results through the pipeline', async () => {
     const provider = new RemotiveProvider();
     const greenhouse = new GreenhouseProvider();
+    const programathor = new ProgramathorProvider();
     jest
       .spyOn(greenhouse, 'search')
       .mockResolvedValue([
         normalizedJob({ source: JobSource.GREENHOUSE, externalId: '2' }),
       ]);
     jest.spyOn(provider, 'search').mockResolvedValue([normalizedJob()]);
+    jest.spyOn(programathor, 'search').mockResolvedValue([
+      normalizedJob({ externalId: '3', source: JobSource.OTHER }),
+    ]);
     const service = new JobSearchService(
       provider,
       greenhouse,
       new JobClassifierService(),
       new JobDecisionService(),
       new JobScoreService(),
+      programathor,
     );
 
     const result = await service.search(10);
 
-    expect(result.summary.found).toBe(2);
+    expect(result.summary.found).toBe(3);
     expect(result.jobs[0].classification.track).toBe('NODE');
     expect(result.jobs[0].decision.decision).toBe('ACCEPT');
     expect(result.jobs[0].score.score).toBeGreaterThan(0);
@@ -105,6 +148,8 @@ describe('JobSearchService', () => {
   it('orders by acceptance and score and hides rejected jobs', async () => {
     const provider = new RemotiveProvider();
     const greenhouse = new GreenhouseProvider();
+    const programathor = new ProgramathorProvider();
+    jest.spyOn(programathor, 'search').mockResolvedValue([]);
     jest.spyOn(greenhouse, 'search').mockResolvedValue([]);
     jest.spyOn(provider, 'search').mockResolvedValue([
       normalizedJob({ externalId: 'low', description: 'Node.js.' }),
@@ -129,6 +174,7 @@ describe('JobSearchService', () => {
       new JobClassifierService(),
       new JobDecisionService(),
       new JobScoreService(),
+      programathor,
     );
 
     const result = await service.search();
@@ -142,18 +188,21 @@ describe('JobSearchService', () => {
   it('keeps the other source when one provider fails', async () => {
     const provider = new RemotiveProvider();
     const greenhouse = new GreenhouseProvider();
+    const programathor = new ProgramathorProvider();
     jest
       .spyOn(greenhouse, 'search')
       .mockResolvedValue([normalizedJob({ source: JobSource.GREENHOUSE })]);
     jest
       .spyOn(provider, 'search')
       .mockRejectedValue(new Error('source unavailable'));
+    jest.spyOn(programathor, 'search').mockRejectedValue(new Error('source unavailable'));
     const service = new JobSearchService(
       provider,
       greenhouse,
       new JobClassifierService(),
       new JobDecisionService(),
       new JobScoreService(),
+      programathor,
     );
 
     const result = await service.search();

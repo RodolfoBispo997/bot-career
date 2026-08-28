@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { JobClassifierService } from '../job-classifier/job-classifier.service';
 import { JobDecisionService } from '../job-decision/job-decision.service';
 import { JobScoreService } from '../job-score/job-score.service';
 import { SEARCH_PROFILE } from '../search-profile/search-profile.config';
 import { RemotiveProvider } from '../sources/remotive.provider';
 import { GreenhouseProvider } from '../sources/greenhouse.provider';
+import { ProgramathorProvider } from '../sources/programathor.provider';
 import { NormalizedJobInput } from '../sources/types';
 import { JobSearchResult } from './types';
 import { detectEligibilityReview } from './eligibility-review';
@@ -17,6 +18,7 @@ export class JobSearchService {
     private readonly classifier: JobClassifierService,
     private readonly decisionService: JobDecisionService,
     private readonly scoreService: JobScoreService,
+    @Optional() private readonly programathor?: ProgramathorProvider,
   ) {}
 
   async search(limit = 100): Promise<JobSearchResult> {
@@ -24,6 +26,7 @@ export class JobSearchService {
     const results = await Promise.all([
       this.collect('remotive', () => this.remotive.search(100)),
       this.collect('greenhouse', () => this.greenhouse.search(boundedLimit)),
+      this.collect('programathor', () => this.programathor?.search(boundedLimit) ?? Promise.resolve([])),
     ]);
     const sources = Object.fromEntries(
       results.map((result) => [
