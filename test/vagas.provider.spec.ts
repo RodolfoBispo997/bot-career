@@ -29,7 +29,7 @@ describe('VagasProvider', () => {
     mockedFetch.mockResolvedValue({
       ok: true,
       text: async () =>
-        '<a href="/vagas/v-456"><h2>Backend Node.js</h2>Acme São Paulo</a>',
+        '<li class="vaga" data-id-vaga="456"><a class="link-detalhes-vaga" href="/vagas/v-456">Backend Node.js</a><span class="emprVaga">Acme</span><div class="vaga-local">São Paulo</div><span class="data-publicacao">2026-08-20</span></li>',
     } as Response);
     global.fetch = mockedFetch;
     try {

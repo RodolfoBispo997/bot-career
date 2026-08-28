@@ -10,6 +10,7 @@ interface VagasJob {
   description?: string;
   location?: string;
   url?: string;
+  publishedAt?: string;
 }
 
 const SEARCH_TERMS = [
@@ -23,19 +24,44 @@ const SEARCH_TERMS = [
   'estágio',
   'estagio',
 ];
+const SEARCH_QUERIES = [
+  'Desenvolvedor',
+  'Desenvolvedor Backend',
+  'Software Engineer',
+  'Full Stack',
+  'PHP',
+  'Estágio Desenvolvimento',
+];
 
 @Injectable()
 export class VagasProvider implements JobProvider {
-  private readonly endpoint =
-    'https://www.vagas.com.br/vagas-de-emprego?term=Node.js';
+  private readonly endpoint = 'https://www.vagas.com.br/vagas/pesquisas?q=';
 
   async search(limit: number): Promise<NormalizedJobInput[]> {
-    const response = await fetch(this.endpoint, {
-      headers: { Accept: 'text/html' },
-    });
-    if (!response.ok) throw new Error(`Vagas.com.br returned HTTP ${response.status}`);
-    const html = await response.text();
-    return this.parse(html).filter((job) => this.matches(job)).slice(0, limit);
+    const results = await Promise.all(
+      SEARCH_QUERIES.map(async (query) => {
+        try {
+          const response = await fetch(`${this.endpoint}${encodeURIComponent(query)}`, {
+            headers: { Accept: 'text/html' },
+          });
+          if (!response.ok) throw new Error(`Vagas.com.br returned HTTP ${response.status}`);
+          return this.parse(await response.text());
+        } catch {
+          return [];
+        }
+      }),
+    );
+    const seen = new Set<string>();
+    return results
+      .flat()
+      .filter((job) => this.matches(job))
+      .filter((job) => {
+        const key = job.externalId ?? job.sourceUrl;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, limit);
   }
 
   normalize(job: VagasJob): NormalizedJobInput {
@@ -51,30 +77,31 @@ export class VagasProvider implements JobProvider {
       employmentType: this.employmentType(context),
       source: JobSource.OTHER,
       sourceUrl: job.url ?? '',
-      publishedAt: null,
+      publishedAt: job.publishedAt ? this.date(job.publishedAt) : null,
       discoveredAt: new Date(),
     };
   }
 
   private parse(html: string): NormalizedJobInput[] {
     const jobs: NormalizedJobInput[] = [];
-    const links = /<a[^>]+href=["']((?:https?:\/\/www\.vagas\.com\.br)?\/vagas\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-    for (const match of html.matchAll(links)) {
-      const card = match[2];
-      const heading = card.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i);
-      const title = stripHtml(heading?.[1] ?? card).replace(/\s+/g, ' ').trim();
+    const cards = /<li[^>]+class=["'][^"']*\bvaga\b[^"']*["'][^>]*>([\s\S]*?)<\/li>/gi;
+    for (const match of html.matchAll(cards)) {
+      const card = match[0];
+      const link = card.match(/<a[^>]+class=["'][^"']*link-detalhes-vaga[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+      if (!link) continue;
+      const title = stripHtml(link[2]).replace(/\s+/g, ' ').trim();
       if (!title || /vencid[ao]/i.test(title)) continue;
       const description = stripHtml(card).replace(/\s+/g, ' ').trim();
-      const url = match[1].startsWith('http')
-        ? match[1]
-        : `https://www.vagas.com.br${match[1]}`;
+      const url = link[1].startsWith('http') ? link[1] : `https://www.vagas.com.br${link[1]}`;
+      const id = card.match(/data-id-vaga=["']([^"']+)["']/i)?.[1];
       jobs.push(
         this.normalize({
-          id: match[1].match(/\/vagas\/(?:v-)?([^/?#]+)/i)?.[1],
+          id,
           title,
           description,
-          company: this.field(card, 'company|empresa'),
-          location: this.field(card, 'location|local|cidade'),
+          company: this.field(card, 'emprVaga'),
+          location: this.field(card, 'vaga-local'),
+          publishedAt: this.field(card, 'data-publicacao'),
           url,
         }),
       );
@@ -91,6 +118,11 @@ export class VagasProvider implements JobProvider {
     );
     const value = match ? stripHtml(match[1]).replace(/\s+/g, ' ').trim() : '';
     return value || undefined;
+  }
+
+  private date(value: string): Date | null {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   private matches(job: NormalizedJobInput): boolean {
