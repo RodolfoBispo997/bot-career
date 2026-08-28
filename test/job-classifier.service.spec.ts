@@ -205,6 +205,21 @@ describe('JobClassifierService', () => {
     expect(result.seniority).toBe(Seniority.UNSPECIFIED);
   });
 
+  it('detects seniority in real structured ProgramaThor text', () => {
+    expect(
+      classify(
+        'Desenvolvedor(a) de Software Full Stack',
+        'Stack e responsabilidades. Até R$6.000 Júnior PJ Node.js.',
+      ).seniority,
+    ).toBe(Seniority.JUNIOR);
+    expect(
+      classify(
+        'Full-stack Engineer',
+        'STRIDER Remoto Startup Sênior PJ Node.js e NestJS.',
+      ).seniority,
+    ).toBe(Seniority.SENIOR);
+  });
+
   it('does not make a differential Java mention the primary stack', () => {
     const result = classify(
       'Backend Node.js Developer',
