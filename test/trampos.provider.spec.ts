@@ -36,4 +36,32 @@ describe('TramposProvider', () => {
       global.fetch = originalFetch;
     }
   });
+
+  it('normalizes JobPosting JSON-LD details', async () => {
+    const provider = new TramposProvider();
+    const originalFetch = global.fetch;
+    const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => `window.initialLoad = function(store) { return { "opportunity_groups": [{ "opportunities": [{ "id": 774366, "name": "Desenvolvedor Fullstack" }] }] }; }`,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => `<script type="application/ld+json">
+        {"@type":"JobPosting","title":"Desenvolvedor(a) Full Stack","description":"Atue com produtos digitais. Experiência profissional com Ruby on Rails. Disponibilidade para trabalho híbrido em Bragança Paulista, SP.","datePosted":"2026-09-03","employmentType":"FULL_TIME","hiringOrganization":{"name":"Acme"},"jobLocation":{"address":{"addressLocality":"Bragança Paulista","addressRegion":"SP"}}}
+      </script><h1>Desenvolvedor(a) Full Stack</h1>`,
+      } as Response);
+    global.fetch = fetchMock;
+    try {
+      const [result] = await provider.search(1);
+      expect(result).toMatchObject({
+        location: 'Bragança Paulista / SP',
+        workMode: WorkMode.HYBRID,
+        description: expect.stringContaining('Ruby on Rails'),
+      });
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
 });

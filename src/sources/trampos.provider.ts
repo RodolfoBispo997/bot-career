@@ -146,6 +146,7 @@ export class TramposProvider implements JobProvider {
     });
     if (!response.ok) return null;
     const html = await response.text();
+    const jobPosting = this.jobPosting(html);
     const text = stripHtml(html).replace(/\s+/g, ' ').trim();
     const description = this.section(text, 'Descrição', 'Requisitos') ?? text;
     const company = text.match(/#\S[\s\S]*?\s+([\wÀ-ÿ .&-]+)\s+\|\s+/)?.[1];
@@ -159,14 +160,61 @@ export class TramposProvider implements JobProvider {
     )?.[0];
     return this.normalize({
       ...link,
-      title: this.heading(html) || link.title,
-      company: company ?? link.company,
-      description,
-      location: location ?? link.location,
-      workMode: workMode ?? link.workMode,
-      employmentType: employmentType ?? link.employmentType,
-      publishedAt: this.relativeDate(publishedAt) ?? link.publishedAt,
+      title: jobPosting?.title || this.heading(html) || link.title,
+      company:
+        this.jsonText(jobPosting?.hiringOrganization?.name) ??
+        company ??
+        link.company,
+      description: jobPosting?.description || description,
+      location: this.jsonLocation(jobPosting) ?? location ?? link.location,
+      workMode:
+        jobPosting?.description && /h[ií]brido|trabalho h[ií]brido/i.test(jobPosting.description)
+          ? 'Híbrido'
+          : jobPosting?.jobLocation
+            ? jobPosting.jobLocation.home_office
+              ? 'Remoto'
+              : workMode ?? link.workMode
+            : workMode ?? link.workMode,
+      employmentType: jobPosting?.employmentType || employmentType || link.employmentType,
+      publishedAt: jobPosting?.datePosted || this.relativeDate(publishedAt) || link.publishedAt,
     });
+  }
+
+  private jobPosting(html: string): Record<string, any> | null {
+    const scripts = html.match(
+      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    );
+    for (const script of scripts ?? []) {
+      const content = script.replace(/^<script[^>]*>|<\/script>$/gi, '').trim();
+      try {
+        const value = JSON.parse(content) as Record<string, any> | Record<string, any>[];
+        const candidates = Array.isArray(value) ? value : [value];
+        const posting = candidates.find((candidate) =>
+          Array.isArray(candidate['@type'])
+            ? candidate['@type'].includes('JobPosting')
+            : candidate['@type'] === 'JobPosting',
+        );
+        if (posting) return posting;
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  private jsonText(value: unknown): string | undefined {
+    if (typeof value === 'string') return value.trim() || undefined;
+    if (Array.isArray(value) && typeof value[0] === 'string')
+      return value[0].trim() || undefined;
+    return undefined;
+  }
+
+  private jsonLocation(jobPosting: Record<string, any> | null): string | undefined {
+    const address = jobPosting?.jobLocation?.address;
+    if (!address) return undefined;
+    const locality = this.jsonText(address.addressLocality);
+    const region = this.jsonText(address.addressRegion);
+    return [locality, region].filter(Boolean).join(' / ') || undefined;
   }
 
   private heading(html: string): string | undefined {
