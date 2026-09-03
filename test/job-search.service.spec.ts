@@ -7,6 +7,7 @@ import { JobSearchService } from '../src/job-search/job-search.service';
 import { GreenhouseProvider } from '../src/sources/greenhouse.provider';
 import { RemotiveProvider } from '../src/sources/remotive.provider';
 import { ProgramathorProvider } from '../src/sources/programathor.provider';
+import { TramposProvider } from '../src/sources/trampos.provider';
 import { NormalizedJobInput } from '../src/sources/types';
 
 function normalizedJob(
@@ -101,6 +102,29 @@ describe('JobSearchService', () => {
     });
   });
 
+  it('normalizes a Trampos public job', () => {
+    const provider = new TramposProvider();
+    const result = provider.normalize({
+      id: 774199,
+      title: 'Desenvolvedor Backend Node.js',
+      company: 'Acme',
+      description: '<p>Node.js e PHP.</p>',
+      location: 'São Paulo - SP',
+      workMode: 'Híbrido',
+      employmentType: 'CLT',
+      url: 'https://trampos.co/oportunidades/774199',
+      publishedAt: '2026-09-02T12:00:00Z',
+    });
+    expect(result).toMatchObject({
+      externalId: '774199',
+      company: 'Acme',
+      workMode: WorkMode.HYBRID,
+      employmentType: EmploymentType.CLT,
+      source: JobSource.OTHER,
+      sourceUrl: 'https://trampos.co/oportunidades/774199',
+    });
+  });
+
   it('ignores a ProgramaThor expired job', async () => {
     const provider = new ProgramathorProvider();
     const originalFetch = global.fetch;
@@ -154,9 +178,11 @@ describe('JobSearchService', () => {
         normalizedJob({ source: JobSource.GREENHOUSE, externalId: '2' }),
       ]);
     jest.spyOn(provider, 'search').mockResolvedValue([normalizedJob()]);
-    jest.spyOn(programathor, 'search').mockResolvedValue([
-      normalizedJob({ externalId: '3', source: JobSource.OTHER }),
-    ]);
+    jest
+      .spyOn(programathor, 'search')
+      .mockResolvedValue([
+        normalizedJob({ externalId: '3', source: JobSource.OTHER }),
+      ]);
     const service = new JobSearchService(
       provider,
       greenhouse,
@@ -224,7 +250,9 @@ describe('JobSearchService', () => {
     jest
       .spyOn(provider, 'search')
       .mockRejectedValue(new Error('source unavailable'));
-    jest.spyOn(programathor, 'search').mockRejectedValue(new Error('source unavailable'));
+    jest
+      .spyOn(programathor, 'search')
+      .mockRejectedValue(new Error('source unavailable'));
     const service = new JobSearchService(
       provider,
       greenhouse,

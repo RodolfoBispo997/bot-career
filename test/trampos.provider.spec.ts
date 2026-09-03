@@ -18,19 +18,22 @@ describe('TramposProvider', () => {
       } as Response)
       .mockResolvedValueOnce({
         ok: true,
-        text: async () => '<h1>Desenvolvedor Fullstack</h1><p>Descrição Node.js</p>',
+        text: async () =>
+          '<h1>Desenvolvedor Fullstack</h1><p>Descrição Node.js</p>',
       } as Response);
     global.fetch = fetchMock;
     try {
-      await expect(provider.search(10)).resolves.toMatchObject([{
-        externalId: '7',
-        title: 'Desenvolvedor Fullstack',
-        company: 'Acme',
-        location: 'São Paulo',
-        workMode: WorkMode.REMOTE,
-        employmentType: EmploymentType.OTHER,
-        sourceUrl: 'https://trampos.co/oportunidades/7',
-      }]);
+      await expect(provider.search(10)).resolves.toMatchObject([
+        {
+          externalId: '7',
+          title: 'Desenvolvedor Fullstack',
+          company: 'Acme',
+          location: 'São Paulo',
+          workMode: WorkMode.REMOTE,
+          employmentType: EmploymentType.OTHER,
+          sourceUrl: 'https://trampos.co/oportunidades/7',
+        },
+      ]);
       expect(fetchMock).toHaveBeenCalledTimes(2);
     } finally {
       global.fetch = originalFetch;
@@ -44,7 +47,8 @@ describe('TramposProvider', () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
-        text: async () => `window.initialLoad = function(store) { return { "opportunity_groups": [{ "opportunities": [{ "id": 774366, "name": "Desenvolvedor Fullstack" }] }] }; }`,
+        text: async () =>
+          `window.initialLoad = function(store) { return { "opportunity_groups": [{ "opportunities": [{ "id": 774366, "name": "Desenvolvedor Fullstack" }] }] }; }`,
       } as Response)
       .mockResolvedValueOnce({
         ok: true,

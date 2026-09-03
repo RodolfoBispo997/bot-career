@@ -45,7 +45,9 @@ export class TramposProvider implements JobProvider {
     if (!response.ok)
       throw new Error(`Trampos returned HTTP ${response.status}`);
     const html = await response.text();
-    const links = this.listOpportunities(html).filter((job) => this.matches(job));
+    const links = this.listOpportunities(html).filter((job) =>
+      this.matches(job),
+    );
     const jobs = await Promise.all(
       links.slice(0, limit).map((job) => this.load(job)),
     );
@@ -83,21 +85,25 @@ export class TramposProvider implements JobProvider {
       const id = opportunity.id;
       if (id === undefined || seen.has(String(id))) return [];
       seen.add(String(id));
-      return [{
-        ...opportunity,
-        title: opportunity.name,
-        company: opportunity.company_name,
-        location: opportunity.city ?? opportunity.state,
-        workMode: opportunity.home_office ? 'Remoto' : undefined,
-        employmentType: opportunity.type_name,
-        publishedAt: opportunity.published_at,
-        url: `https://trampos.co/oportunidades/${id}`,
-      }];
+      return [
+        {
+          ...opportunity,
+          title: opportunity.name,
+          company: opportunity.company_name,
+          location: opportunity.city ?? opportunity.state,
+          workMode: opportunity.home_office ? 'Remoto' : undefined,
+          employmentType: opportunity.type_name,
+          publishedAt: opportunity.published_at,
+          url: `https://trampos.co/oportunidades/${id}`,
+        },
+      ];
     });
   }
 
   private embeddedArray(html: string, property: string): TramposJob[] {
-    const marker = new RegExp(`["']?${property}["']?\\s*:\\s*\\[`, 'm').exec(html);
+    const marker = new RegExp(`["']?${property}["']?\\s*:\\s*\\[`, 'm').exec(
+      html,
+    );
     if (!marker || marker.index === undefined) return [];
     const start = marker.index + marker[0].lastIndexOf('[');
     let depth = 0;
@@ -125,19 +131,19 @@ export class TramposProvider implements JobProvider {
   }
 
   private embeddedObjects(value: string): TramposJob[] {
-    return [...value.matchAll(/\{[^{}]*["']?id["']?\s*:\s*\d+[^{}]*\}/g)].flatMap(
-      (match) => {
-        try {
-          return [JSON.parse(match[0]) as TramposJob];
-        } catch {
-          return [];
-        }
-      },
-    );
+    return [
+      ...value.matchAll(/\{[^{}]*["']?id["']?\s*:\s*\d+[^{}]*\}/g),
+    ].flatMap((match) => {
+      try {
+        return [JSON.parse(match[0]) as TramposJob];
+      } catch {
+        return [];
+      }
+    });
   }
 
   private text(value?: string | string[]): string {
-    return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+    return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
   }
 
   private async load(link: TramposJob): Promise<NormalizedJobInput | null> {
@@ -168,15 +174,20 @@ export class TramposProvider implements JobProvider {
       description: jobPosting?.description || description,
       location: this.jsonLocation(jobPosting) ?? location ?? link.location,
       workMode:
-        jobPosting?.description && /h[ií]brido|trabalho h[ií]brido/i.test(jobPosting.description)
+        jobPosting?.description &&
+        /h[ií]brido|trabalho h[ií]brido/i.test(jobPosting.description)
           ? 'Híbrido'
           : jobPosting?.jobLocation
             ? jobPosting.jobLocation.home_office
               ? 'Remoto'
-              : workMode ?? link.workMode
-            : workMode ?? link.workMode,
-      employmentType: jobPosting?.employmentType || employmentType || link.employmentType,
-      publishedAt: jobPosting?.datePosted || this.relativeDate(publishedAt) || link.publishedAt,
+              : (workMode ?? link.workMode)
+            : (workMode ?? link.workMode),
+      employmentType:
+        jobPosting?.employmentType || employmentType || link.employmentType,
+      publishedAt:
+        jobPosting?.datePosted ||
+        this.relativeDate(publishedAt) ||
+        link.publishedAt,
     });
   }
 
@@ -187,7 +198,8 @@ export class TramposProvider implements JobProvider {
     for (const script of scripts ?? []) {
       const content = script.replace(/^<script[^>]*>|<\/script>$/gi, '').trim();
       try {
-        const value = JSON.parse(content) as Record<string, any> | Record<string, any>[];
+        const value = JSON.parse(content) as
+          Record<string, any> | Record<string, any>[];
         const candidates = Array.isArray(value) ? value : [value];
         const posting = candidates.find((candidate) =>
           Array.isArray(candidate['@type'])
@@ -209,7 +221,9 @@ export class TramposProvider implements JobProvider {
     return undefined;
   }
 
-  private jsonLocation(jobPosting: Record<string, any> | null): string | undefined {
+  private jsonLocation(
+    jobPosting: Record<string, any> | null,
+  ): string | undefined {
     const address = jobPosting?.jobLocation?.address;
     if (!address) return undefined;
     const locality = this.jsonText(address.addressLocality);
@@ -232,7 +246,8 @@ export class TramposProvider implements JobProvider {
   }
 
   private matches(job: TramposJob): boolean {
-    const text = `${job.title ?? job.name ?? ''} ${this.text(job.company ?? job.company_name)} ${job.type_name ?? ''}`.toLowerCase();
+    const text =
+      `${job.title ?? job.name ?? ''} ${this.text(job.company ?? job.company_name)} ${job.type_name ?? ''}`.toLowerCase();
     return SEARCH_TERMS.some((term) => text.includes(term));
   }
 

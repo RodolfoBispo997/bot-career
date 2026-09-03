@@ -7,6 +7,7 @@ import { RemotiveProvider } from '../sources/remotive.provider';
 import { GreenhouseProvider } from '../sources/greenhouse.provider';
 import { ProgramathorProvider } from '../sources/programathor.provider';
 import { VagasProvider } from '../sources/vagas.provider';
+import { TramposProvider } from '../sources/trampos.provider';
 import { NormalizedJobInput } from '../sources/types';
 import { JobSearchResult } from './types';
 import { detectEligibilityReview } from './eligibility-review';
@@ -21,6 +22,7 @@ export class JobSearchService {
     private readonly scoreService: JobScoreService,
     @Optional() private readonly programathor?: ProgramathorProvider,
     @Optional() private readonly vagas?: VagasProvider,
+    @Optional() private readonly trampos?: TramposProvider,
   ) {}
 
   async search(limit = 100): Promise<JobSearchResult> {
@@ -28,8 +30,18 @@ export class JobSearchService {
     const results = await Promise.all([
       this.collect('remotive', () => this.remotive.search(100)),
       this.collect('greenhouse', () => this.greenhouse.search(boundedLimit)),
-      this.collect('programathor', () => this.programathor?.search(boundedLimit) ?? Promise.resolve([])),
-      this.collect('vagas', () => this.vagas?.search(boundedLimit) ?? Promise.resolve([])),
+      this.collect(
+        'programathor',
+        () => this.programathor?.search(boundedLimit) ?? Promise.resolve([]),
+      ),
+      this.collect(
+        'vagas',
+        () => this.vagas?.search(boundedLimit) ?? Promise.resolve([]),
+      ),
+      this.collect(
+        'trampos',
+        () => this.trampos?.search(boundedLimit) ?? Promise.resolve([]),
+      ),
     ]);
     const sources = Object.fromEntries(
       results.map((result) => [
