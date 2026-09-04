@@ -7,6 +7,7 @@ import { GreenhouseProvider } from '../sources/greenhouse.provider';
 import { ProgramathorProvider } from '../sources/programathor.provider';
 import { VagasProvider } from '../sources/vagas.provider';
 import { TramposProvider } from '../sources/trampos.provider';
+import { RecruteiProvider } from '../sources/recrutei.provider';
 import { JobSearchController } from './job-search.controller';
 import { JobSearchService } from './job-search.service';
 
@@ -19,6 +20,7 @@ import { JobSearchService } from './job-search.service';
     ProgramathorProvider,
     VagasProvider,
     TramposProvider,
+    RecruteiProvider,
     JobSearchService,
   ],
 })

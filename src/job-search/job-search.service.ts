@@ -8,6 +8,7 @@ import { GreenhouseProvider } from '../sources/greenhouse.provider';
 import { ProgramathorProvider } from '../sources/programathor.provider';
 import { VagasProvider } from '../sources/vagas.provider';
 import { TramposProvider } from '../sources/trampos.provider';
+import { RecruteiProvider } from '../sources/recrutei.provider';
 import { NormalizedJobInput } from '../sources/types';
 import { JobSearchResult } from './types';
 import { detectEligibilityReview } from './eligibility-review';
@@ -23,6 +24,7 @@ export class JobSearchService {
     @Optional() private readonly programathor?: ProgramathorProvider,
     @Optional() private readonly vagas?: VagasProvider,
     @Optional() private readonly trampos?: TramposProvider,
+    @Optional() private readonly recrutei?: RecruteiProvider,
   ) {}
 
   async search(limit = 100): Promise<JobSearchResult> {
@@ -41,6 +43,10 @@ export class JobSearchService {
       this.collect(
         'trampos',
         () => this.trampos?.search(boundedLimit) ?? Promise.resolve([]),
+      ),
+      this.collect(
+        'recrutei',
+        () => this.recrutei?.search(boundedLimit) ?? Promise.resolve([]),
       ),
     ]);
     const sources = Object.fromEntries(
