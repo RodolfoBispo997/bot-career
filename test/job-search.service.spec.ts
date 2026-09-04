@@ -194,7 +194,7 @@ describe('JobSearchService', () => {
 
     const result = await service.search(10);
 
-    expect(result.summary.found).toBe(3);
+    expect(result.summary.found).toBe(2);
     expect(result.jobs[0].classification.track).toBe('NODE');
     expect(result.jobs[0].decision.decision).toBe('ACCEPT');
     expect(result.jobs[0].score.score).toBeGreaterThan(0);
@@ -235,7 +235,7 @@ describe('JobSearchService', () => {
     const result = await service.search();
 
     expect(result.summary.rejected).toBe(1);
-    expect(result.jobs).toHaveLength(3);
+    expect(result.jobs).toHaveLength(2);
     expect(result.jobs[0].externalId).toBe('high');
     expect(result.jobs.some((job) => job.externalId === 'reject')).toBe(false);
   });
@@ -267,5 +267,83 @@ describe('JobSearchService', () => {
     expect(result.summary.found).toBe(1);
     expect(result.sources.remotive.status).toBe('error');
     expect(result.sources.greenhouse.status).toBe('ok');
+  });
+
+  it('deduplicates the same job across sources and keeps the longer description', () => {
+    const service = new JobSearchService(
+      new RemotiveProvider(),
+      new GreenhouseProvider(),
+      new JobClassifierService(),
+      new JobDecisionService(),
+      new JobScoreService(),
+    );
+    const first = normalizedJob({
+      source: JobSource.OTHER,
+      description: 'short',
+    });
+    const second = normalizedJob({
+      source: JobSource.GREENHOUSE,
+      externalId: '2',
+      title: '  Backend Node.js, Junior ',
+      company: 'Exámple.',
+      location: 'Brazil',
+      description: 'A much longer description.',
+    });
+
+    expect((service as any).deduplicate([first, second])).toEqual([second]);
+  });
+
+  it('keeps same-title jobs from different companies', () => {
+    const service = new JobSearchService(
+      new RemotiveProvider(),
+      new GreenhouseProvider(),
+      new JobClassifierService(),
+      new JobDecisionService(),
+      new JobScoreService(),
+    );
+    const first = normalizedJob({ source: JobSource.OTHER });
+    const second = normalizedJob({
+      source: JobSource.GREENHOUSE,
+      externalId: '2',
+      company: 'Other company',
+    });
+
+    expect((service as any).deduplicate([first, second])).toHaveLength(2);
+  });
+
+  it('keeps same-title jobs from different locations', () => {
+    const service = new JobSearchService(
+      new RemotiveProvider(),
+      new GreenhouseProvider(),
+      new JobClassifierService(),
+      new JobDecisionService(),
+      new JobScoreService(),
+    );
+    const first = normalizedJob({ source: JobSource.OTHER });
+    const second = normalizedJob({
+      source: JobSource.GREENHOUSE,
+      externalId: '2',
+      location: 'São Paulo',
+    });
+
+    expect((service as any).deduplicate([first, second])).toHaveLength(2);
+  });
+
+  it('deduplicates when one location is absent', () => {
+    const service = new JobSearchService(
+      new RemotiveProvider(),
+      new GreenhouseProvider(),
+      new JobClassifierService(),
+      new JobDecisionService(),
+      new JobScoreService(),
+    );
+    const first = normalizedJob({ source: JobSource.OTHER, location: null });
+    const second = normalizedJob({
+      source: JobSource.GREENHOUSE,
+      externalId: '2',
+      location: 'São Paulo',
+    });
+
+    expect((service as any).deduplicate([first, second])).toHaveLength(1);
   });
 });

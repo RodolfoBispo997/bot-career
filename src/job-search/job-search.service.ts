@@ -145,15 +145,64 @@ export class JobSearchService {
   }
 
   private deduplicate(jobs: NormalizedJobInput[]): NormalizedJobInput[] {
-    const seen = new Set<string>();
-    return jobs.filter((job) => {
-      const key = job.externalId
+    const seenPrimary = new Set<string>();
+    const crossSource = new Map<string, number[]>();
+    const uniqueJobs: NormalizedJobInput[] = [];
+
+    for (const job of jobs) {
+      const primaryKey = job.externalId
         ? `${job.source}:${job.externalId}`
         : `${job.source}:${job.sourceUrl.toLowerCase()}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+      if (seenPrimary.has(primaryKey)) continue;
+      seenPrimary.add(primaryKey);
+
+      const secondaryKey = this.crossSourceKey(job);
+      const existingIndex = (crossSource.get(secondaryKey) ?? []).find(
+        (index) =>
+          uniqueJobs[index].source !== job.source &&
+          this.locationsMatch(uniqueJobs[index].location, job.location),
+      );
+      if (
+        existingIndex !== undefined &&
+        uniqueJobs[existingIndex].source !== job.source
+      ) {
+        if (
+          job.description.length > uniqueJobs[existingIndex].description.length
+        ) {
+          uniqueJobs[existingIndex] = job;
+        }
+        continue;
+      }
+
+      const indexes = crossSource.get(secondaryKey) ?? [];
+      indexes.push(uniqueJobs.length);
+      crossSource.set(secondaryKey, indexes);
+      uniqueJobs.push(job);
+    }
+
+    return uniqueJobs;
+  }
+
+  private crossSourceKey(job: NormalizedJobInput): string {
+    return [job.title, job.company ?? '']
+      .map((value) => this.normalizeForDeduplication(value))
+      .join('|');
+  }
+
+  private locationsMatch(left: string | null, right: string | null): boolean {
+    const normalizedLeft = this.normalizeForDeduplication(left ?? '');
+    const normalizedRight = this.normalizeForDeduplication(right ?? '');
+    return !normalizedLeft || !normalizedRight || normalizedLeft === normalizedRight;
+  }
+
+  private normalizeForDeduplication(value: string): string {
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private process(job: NormalizedJobInput) {
